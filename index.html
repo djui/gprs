@@ -1,0 +1,150 @@
+<!doctype html>
+<html ng-app="gprs">
+    <head>
+        <title ng-controller="TitleCtrl" ng-bind="'Github PR Status  &mdash; ' + user">Github PR Status</title>
+
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.min.css"/>
+        <link rel="stylesheet" href="css/main.css"/>
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min.js"></script>
+        <script src="js/app.js"></script>
+
+        <script type="text/ng-template" id="template/pr-table.html">
+            <table class="large-12" ng-show="prs.length">
+                <thead>
+                    <tr>
+                        <th class="pr-date"><a ng-click="reverse=!reverse;$parent.order('-pull.updated_at', reverse)">Update Date</a></th>
+                        <th class="pr-number">Pull Request</th>
+                        <th class="pr-title">Title</th>
+                        <th class="pr-owner">Owner</th>
+                        <th class="pr-from">From</th>
+                        <th class="pr-to">To</th>
+                        <th class="pr-score">Score</th>
+                        <th class="pr-state">State</th>
+                        <th class="pr-merge">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="pr in prs|filter:filter">
+                        <td class="pr-date">{{pr.pull.updated_at}}</td>
+                        <td class="pr-number"><a ng-href="{{pr.pull.html_url}}">{{pr.repo.owner.login}}/{{pr.repo.name}}#{{pr.pull.number}}</a></td>
+                        <td class="pr-title"><a ng-href="{{pr.pull.html_url}}">{{pr.pull.title}}</a></td>
+                        <td class="pr-owner">
+                            <a ng-href="{{pr.pull.user.html_url}}">
+                              <!-- <img ng-src="{{pr.pull.user.avatar_url}}?s=24" alt="{{pr.pull.user.login}}"/> -->
+                              <img ng-src="https://www.gravatar.com/avatar/{{pr.pull.user.gravatar_id}}?s=24" alt="{{pr.pull.user.login}}"/>
+                              {{pr.pull.user.login}}
+                            </a>
+                        </td>
+                        <td class="pr-from"><a ng-href="{{pr.pull.head.repo.html_url}}/tree/{{pr.pull.head.ref}}">{{pr.pull.head.label}}</a></td>
+                        <td class="pr-to"><a ng-href="{{pr.pull.base.repo.html_url}}/tree/{{pr.pull.head.ref}}">{{pr.pull.base.label}}</a></td>
+                        <td class="pr-score">
+                            <span ng-if="pr.score &gt; 0" class="success round label">+{{pr.score}}</span>
+                            <span ng-if="pr.score &lt; 0" class="alert round label">{{pr.score}}</span>
+                            <span ng-if="pr.score == 0" class="secondary round label">{{pr.score}}</span>
+                        </td>
+                        <td class="pr-state">
+                            <span ng-switch on="pr.state">
+                                <span ng-switch-when="pending" class="radius secondary label" style="background: yellow; color: black;">{{pr.state}}</span>
+                                <span ng-switch-when="success" class="radius success label" style="background: #6cc644; color: white;">{{pr.state}}</span>
+                                <span ng-switch-when="merged" class="radius secondary label" style="background: #6e5494; color: white;">{{pr.state}}</span>
+                                <span ng-switch-when="error" class="radius alert label" style="background: #cea61b; color: white;">{{pr.state}}</span>
+                                <span ng-switch-when="failure" class="radius alert label" style="background: #ff0000; color: white;">{{pr.state}}</span>
+                                <span ng-switch-when="empty" class="radius secondary label">{{pr.state}}</span>
+                                <span ng-switch-default class="radius alert label">{{pr.state}}</span>
+                            </span>
+                        </td>
+                        <td class="pr-merge">
+                            <a ng-if="pr.state == 'success' && pr.score > 0" ng-click="$parent.$parent.$parent.merge(pr);"><span class="radius regular label">Merge</span></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </script>
+    </head>
+
+    <body>
+        <nav class="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <h1><a href="#">GitHub Pull-Requests Status</a></h1>
+                </li>
+            </ul>
+            <section class="top-bar-section">
+                <ul class="right">
+                    <li class="active">
+                      <input type="submit" class="button" value="logout" ng-click="logout()" ng-controller="UserCtrl" ng-show="loggedin"/>
+                    </li>
+                </ul>
+            </section>
+        </nav>
+
+        <section ng-controller="UserCtrl" ng-hide="loggedin" class="ng-hide large-12 large-centered columns">
+            <div class="row collapse">&nbsp;</div>
+            <form class="large-4 large-centered columns">
+                <div class="row collapse">
+                    <div class="row collapse prefix-radius">
+                        <div class="small-3 columns">
+                            <label for="username">
+                                <span class="prefix">Username</span>
+                            </label>
+                        </div>
+                        <div class="small-9 columns">
+                            <input ng-model="user" type="text" name="username" placeholder="Username to track" required/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row collapse">
+                    <div class="row collapse prefix-radius">
+                        <div class="small-3 columns">
+                            <label for="token">
+                                <span class="prefix">API Token</span>
+                            </label>
+                        </div>
+                        <div class="small-9 columns">
+                            <input ng-model="token" type="text" name="token" placeholder="Personal Access Token" required/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row collapse">
+                    <input type="submit" class="button" value="login" ng-click="login()"/>
+                </div>
+                <div class="row collapse">
+                    <div class="row">
+                        <p>Have no Personal Access Token? <a href="https://github.com/settings/tokens/new">Generate</a> one!</p>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section ng-controller="PullRequestsCtrl" ng-show="loggedin" class="large-12 large-centered columns">
+            <div data-magellan-expedition="fixed">
+                <dl class="sub-nav">
+                    <dd data-magellan-arrival="outgoing">
+                        <a href="#outgoing">Outgoing</a>
+                    </dd>
+                    <dd data-magellan-arrival="incoming-user">
+                        <a href="#incoming-user">Incoming <span class="comment">(@{{user}})</span></a>
+                    </dd>
+                    <dd data-magellan-arrival="incoming-other">
+                        <a href="#incoming-other">Incoming <span class="comment">(all others)</span></a>
+                    </dd>
+                </dl>
+            </div>
+            <a name="outgoing"></a>
+            <h4 data-magellan-destination="outgoing">Outgoing</h4>
+            <pr-table prs="prs" filter="outgoingPRFilter"></pr-table>
+
+            <a name="incoming-user"></a>
+            <h4 data-magellan-destination="incoming-user">Incoming <span class="comment">(@{{user}})</span></h4>
+            <pr-table prs="prs" filter="incomingSelfPRFilter"></pr-table>
+
+            <a name="incoming-other"></a>
+            <h4 data-magellan-destination="incoming-other">Incoming <span class="comment">(all others)</span></h4>
+            <pr-table prs="prs" filter="incomingPRFilter"></pr-table>
+        </section>
+    </body>
+</html>

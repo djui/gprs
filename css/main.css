@@ -1,0 +1,12 @@
+a:hover { text-decoration: underline; }
+
+th,td { white-space: nowrap; }
+th.pr-date,td.pr-date { width: 8%; }
+th.pr-number,td.pr-number { width: 20%; }
+th.pr-title,td.pr-title { width: 36%; }
+th.pr-owner,td.pr-owner { width: 8%; }
+th.pr-from,td.pr-from { width: 8%; }
+th.pr-to,td.pr-to { width: 8%; }
+th.pr-score,td.pr-score { width: 4%; text-align: center; }
+th.pr-state,td.pr-state { width: 4%; text-align: center; }
+th.pr-merge,td.pr-merge { width: 4%; text-align: center; }
